@@ -9,7 +9,7 @@
 - batch-normalize
 - dropout
 - 正则化
-- 优化方法
+- 优化方法 
 
 
 # 单个超参数调节
