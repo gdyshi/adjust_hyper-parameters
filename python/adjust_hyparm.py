@@ -12,15 +12,17 @@ import operator
 FLAGS = None
 
 layers = [784, 270, 90, 30, 10]
-TRAINING_STEPS = 20000
 
 learning_rate_up = 10
 learning_rate_down = 0.00001
-batch_size_up = 50
-# batch_size_up = 1000
+# batch_size_up = 50
+batch_size_up = 1000
 batch_size_down = 1
 momentum_rate_up = 0.99999
 momentum_rate_down = 0.9
+
+random_num = 5
+TRAINING_STEPS = 10000
 
 
 def accuracy(y_pred, y_real):
@@ -29,10 +31,8 @@ def accuracy(y_pred, y_real):
     return acc
 
 
-def train(learning_rate, batch_size, momentum_rate):
-    # Import data
-    mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
-    print(batch_size)
+def train(learning_rate, batch_size, momentum_rate, mnist):
+    # print(batch_size)
     # Create the model
     x = tf.placeholder(tf.float32, [None, 784])
     y = inference(x)
@@ -57,13 +57,14 @@ def train(learning_rate, batch_size, momentum_rate):
         test_acc = acc.eval(feed_dict={x: mnist.test.images,
                                        y_: mnist.test.labels})
         print("After %d training step(s), accuracy on test is %g." % (TRAINING_STEPS, test_acc))
+    return test_acc
 
 
 def generate_data(learning_rate_up, learning_rate_down, batch_size_up, batch_size_down, momentum_rate_up,
                   momentum_rate_down):
-    learning_rates = np.logspace(np.log10(learning_rate_down), np.log10(learning_rate_up), num=10)
-    batch_sizes = np.linspace(batch_size_down, batch_size_up, num=10).astype(int)
-    momentum_rates = 1 - np.logspace(np.log10(1-momentum_rate_up), np.log10(1-momentum_rate_down), num=10)
+    learning_rates = np.logspace(np.log10(learning_rate_down), np.log10(learning_rate_up), num=random_num)
+    batch_sizes = np.linspace(batch_size_down, batch_size_up, num=random_num).astype(int)
+    momentum_rates = 1 - np.logspace(np.log10(1 - momentum_rate_up), np.log10(1 - momentum_rate_down), num=random_num)
     # learning_rates = np.random.random_integers(np.log10(learning_rate_down), high=np.log10(learning_rate_up), size=10)
     # batch_sizes = np.random.random_integers(batch_size_down, high=batch_size_up, size=10)
     # momentum_rates = np.random.random_integers(np.log10(momentum_rate_down), high=np.log10(momentum_rate_up), size=10)
@@ -71,6 +72,8 @@ def generate_data(learning_rate_up, learning_rate_down, batch_size_up, batch_siz
 
 
 def main(_):
+    # Import data
+    mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
     learning_rates, batch_sizes, momentum_rates = generate_data(learning_rate_up, learning_rate_down, batch_size_up,
                                                                 batch_size_down, momentum_rate_up, momentum_rate_down)
     print('learning_rates:' + str(learning_rates))
@@ -83,14 +86,14 @@ def main(_):
                 print('\n training on hy-parm:learning_rate:%g,batch_size:%d,momentum_rate:%g' % (
                     learning_rate, batch_size, momentum_rate))
                 # acc = 0.9*momentum_rate
-                acc = train(learning_rate, batch_size, momentum_rate)
+                acc = train(learning_rate, batch_size, momentum_rate, mnist)
                 result.append({'learning_rate': learning_rate, 'batch_size': batch_size, 'momentum_rate': momentum_rate,
                                'accuracy': acc})
                 # print('accuracy on test is %g' % (acc))
     result.sort(key=operator.itemgetter('accuracy'), reverse=True)
-    for i in range(10):
+    for i in range(min(10, random_num ** 3)):
         print('after loop the best %d learning_rate:%g batch_size:%d momentum_rate:%g' % (
-        i + 1, result[i]['learning_rate'], result[i]['batch_size'], result[i]['momentum_rate']))
+            i + 1, result[i]['learning_rate'], result[i]['batch_size'], result[i]['momentum_rate']))
         print('accuracy on test is %g' % (result[i]['accuracy']))
 
 
@@ -109,7 +112,8 @@ def inference(x):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='E:\data\mnist',
+    # parser.add_argument('--data_dir', type=str, default='E:\data\mnist',
+    parser.add_argument('--data_dir', type=str, default='/home/zq537/data/raw_data/mnist',
                         help='Directory for storing input data')
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
